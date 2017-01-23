@@ -93,6 +93,26 @@ integrateAdaptivePartial2 method f a b k epsilon = integrateAdaptive method (\x 
 integrateAdaptive3 method f a b c d e g epsilon = integrateAdaptive method (\z -> integrateAdaptivePartial3 method f a b c d z epsilon) e g epsilon
 integrateAdaptivePartial3 method f a b c d k epsilon = integrateAdaptive2 method (\x y -> f x y k) a b c d epsilon
 
+integrateGaussLegendre f a b n = d*sum [ w x*f(m + d*x) | x <- roots ]
+  where d = (b - a)/2
+        m = (b + a)/2
+        w x = 2/(1-x^2)/(legendreP' n x)^2
+        roots = map (findRoot (legendreP n) (legendreP' n) . x0) [1..n]
+        x0 i = cos (pi*(i-1/4)/(n+1/2))
+
+legendreP n x = go n 1 x
+  where go 0 p2 _  = p2
+        go 1 _  p1 = p1
+        go n p2 p1 = go (n-1) p1 $ ((2*n-1)*x*p1 - (n-1)*p2)/n
+
+legendreP' n x = n/(x^2-1)*(x*legendreP n x - legendreP (n-1) x)
+
+findRoot f df = fixedPoint (\x -> x - f x / df x)
+
+fixedPoint f x | abs (fx - x) < 1e-15 = x
+               | otherwise = fixedPoint f fx
+  where fx = f x
+
 targetFunc2 x y = recip $ (1+x^2+y^2)^2
 targetFunc x y z = recip $ (1+x^2+y^2+z^2)^2
 
@@ -100,12 +120,14 @@ low = (-10)
 high = 10
 
 main = do
-  divsXStr <- prompt "Enter the number of X divisions: "
-  divsYStr <- prompt "Enter the number of Y divisions: "
-  divsZStr <- prompt "Enter the number of Z divisions: "
-  let divsX = read divsXStr :: Int
-  let divsY = read divsYStr :: Int
-  let divsZ = read divsZStr :: Int
-  print $ integrate3 integrateSimpson targetFunc low high low high low high divsX divsY divsZ
---  putStrLn $ show $ integrateMiddle3 targetFunc (-100) 100 (-100) 100 (-100) 100 750 750 750
---  putStrLn $ show $ integrateAdaptive3 integrateSimpson targetFunc (-100) 100 (-100) 100 (-100) 100 Nothing
+  (divsXStr: divsYStr: divsZStr: _) <- getArgs
+  ---divsXStr <- prompt "Enter the number of X divisions: "
+  ---divsYStr <- prompt "Enter the number of Y divisions: "
+  ---divsZStr <- prompt "Enter the number of Z divisions: "
+  let divsX = read divsXStr
+  let divsY = read divsYStr
+  let divsZ = read divsZStr
+--  print $ integrate3 integrateSimpson targetFunc low high low high low high divsX divsY divsZ
+  print $ integrate3 integrateGaussLegendre targetFunc low high low high low high divsX divsY divsZ
+--  print $ integrateMiddle3 targetFunc (-100) 100 (-100) 100 (-100) 100 750 750 750
+--  print $ integrateAdaptive3 integrateSimpson targetFunc (-100) 100 (-100) 100 (-100) 100 1e-4
