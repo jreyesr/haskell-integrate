@@ -1,4 +1,5 @@
 import System.IO
+import System.Environment
 
 prompt :: String -> IO String
 prompt text = do
@@ -68,24 +69,11 @@ integrateAdaptive method f a b epsilon =
           middle = (a + b) / 2
           e = maybe 1e-5 id epsilon
 
-
---integrateMiddle2 :: (Double -> Double -> Double) -> Double -> Double -> Double -> Double -> Int -> Int -> Double
---integrateMiddle2 f a b c d divX divY = integrateMiddle (\y -> integrateMiddlePartial2 f a b y divX) c d divY
-
---integrateMiddlePartial2 :: (Double -> Double -> Double) -> Double -> Double -> Double -> Int -> Double
---integrateMiddlePartial2 f a b k n = integrateMiddle (\x -> f x k) a b n
-
 integrate2 method f a b c d divX divY = method (\y -> integratePartial2 method f a b y divX) c d divY
 integratePartial2 method f a b k n = method (\x -> f x k) a b n
 
 integrate3 method f a b c d e g divX divY divZ = method (\z -> integratePartial3 method f a b c d z divX divY) e g divZ
 integratePartial3 method f a b c d k divX divY = integrate2 method (\x y -> f x y k) a b c d divX divY
-
---integrateMiddle3 :: (Double -> Double -> Double -> Double) -> Double -> Double -> Double -> Double -> Double -> Double -> Int -> Int -> Int -> Double
---integrateMiddle3 f a b c d e g divX divY divZ = integrateMiddle (\z -> integrateMiddlePartial3 f a b c d z divX divY) e g divZ
-
---integrateMiddlePartial3 :: (Double -> Double -> Double -> Double) -> Double -> Double -> Double -> Double -> Double -> Int -> Int -> Double
---integrateMiddlePartial3 f a b c d k divX divY = integrateMiddle2 (\x y -> f x y k) a b c d divX divY
 
 integrateAdaptive2 method f a b c d epsilon = integrateAdaptive method (\y -> integrateAdaptivePartial2 method f a b y epsilon) c d epsilon
 integrateAdaptivePartial2 method f a b k epsilon = integrateAdaptive method (\x -> f x k) a b epsilon
@@ -120,14 +108,9 @@ low = (-10)
 high = 10
 
 main = do
-  (divsXStr: divsYStr: divsZStr: _) <- getArgs
-  ---divsXStr <- prompt "Enter the number of X divisions: "
-  ---divsYStr <- prompt "Enter the number of Y divisions: "
-  ---divsZStr <- prompt "Enter the number of Z divisions: "
-  let divsX = read divsXStr
-  let divsY = read divsYStr
-  let divsZ = read divsZStr
+  (divsStr: _) <- getArgs
+  let divs = read divsStr
 --  print $ integrate3 integrateSimpson targetFunc low high low high low high divsX divsY divsZ
-  print $ integrate3 integrateGaussLegendre targetFunc low high low high low high divsX divsY divsZ
+  print $ integrate3 integrateGaussLegendre targetFunc low high low high low high divs divs divs
 --  print $ integrateMiddle3 targetFunc (-100) 100 (-100) 100 (-100) 100 750 750 750
 --  print $ integrateAdaptive3 integrateSimpson targetFunc (-100) 100 (-100) 100 (-100) 100 1e-4
